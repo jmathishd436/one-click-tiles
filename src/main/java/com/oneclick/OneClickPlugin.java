@@ -34,8 +34,8 @@ import java.util.zip.ZipInputStream;
 @Slf4j
 @PluginDescriptor(
         name = "One Click Tiles",
-		description = "Highlight one-click-able tiles in Tileman Mode",
-		tags = {"overlay", "tiles", "tileman"}
+        description = "Highlight one-click-able tiles in Tileman Mode",
+        tags = {"overlay", "tiles", "tileman"}
 )
 public class OneClickPlugin extends Plugin {
     private static final String CONFIG_GROUP = "tilemanMode";
@@ -59,6 +59,8 @@ public class OneClickPlugin extends Plugin {
     @Inject
     private OneClickOverlay overlay;
 
+    private final List<WorldPoint> points = new ArrayList<>();
+    public final Set<WorldPoint> oneClickTiles = new HashSet<>();
     private Pathfinder pathfinder;
 
     @Override
@@ -116,6 +118,13 @@ public class OneClickPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onGameStateChanged(GameStateChanged gameStateChanged) {
+        if (gameStateChanged.getGameState() == GameState.LOGGED_IN) {
+            this.loadPoints();
+        }
+    }
+
+    @Subscribe
     public void onConfigChanged(ConfigChanged configChanged) {
         if (!configChanged.getGroup().equals(CONFIG_GROUP)) {
             return;
@@ -124,8 +133,6 @@ public class OneClickPlugin extends Plugin {
         this.loadPoints();
         this.updateOneClickTiles();
     }
-
-    private final List<WorldPoint> points = new ArrayList<>();
 
     private void loadPoints() {
         points.clear();
@@ -172,7 +179,6 @@ public class OneClickPlugin extends Plugin {
                 .collect(Collectors.toList());
     }
 
-    public Set<WorldPoint> oneClickTiles = new HashSet<>();
     private void updateOneClickTiles() {
         WorldPoint playerLocation = client.getLocalPlayer().getWorldLocation();
         if (playerLocation == null) {
@@ -196,13 +202,6 @@ public class OneClickPlugin extends Plugin {
             if (localPoints.containsAll(path.getPath())) {
                 oneClickTiles.add(localPoint);
             }
-        }
-    }
-
-    @Subscribe
-    public void onGameStateChanged(GameStateChanged gameStateChanged) {
-        if (gameStateChanged.getGameState() == GameState.LOGGED_IN) {
-            this.loadPoints();
         }
     }
 
