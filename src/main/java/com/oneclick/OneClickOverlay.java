@@ -30,7 +30,7 @@ public class OneClickOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        for (final WorldPoint point : plugin.points) {
+        for (final WorldPoint point : plugin.oneClickTiles) {
             if (point.getPlane() != client.getPlane()) {
                 continue;
             }
@@ -43,7 +43,7 @@ public class OneClickOverlay extends Overlay {
     private void drawTile(Graphics2D graphics, WorldPoint point) {
         WorldPoint playerLocation = client.getLocalPlayer().getWorldLocation();
 
-        if (point.distanceTo(playerLocation) >= 30) {
+        if (point.distanceTo(playerLocation) >= OneClickPlugin.MAX_DRAW_DISTANCE) {
             return;
         }
 
