@@ -4,9 +4,10 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
+
 import javax.inject.Inject;
+
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.coords.WorldPoint;
@@ -23,118 +24,106 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Example"
+        name = "One Click Tiles",
+		description = "Highlight one-click-able tiles in Tileman Mode",
+		tags = {"overlay", "tiles", "tileman"}
 )
-public class OneClickPlugin extends Plugin
-{
-	@Inject
-	private Client client;
+public class OneClickPlugin extends Plugin {
+    @Inject
+    private Client client;
 
-	@Inject
-	private OneClickConfig config;
+    @Inject
+    private OneClickConfig config;
 
-	@Inject
-	private ConfigManager configManager;
+    @Inject
+    private ConfigManager configManager;
 
-	@Inject
-	private OverlayManager overlayManager;
+    @Inject
+    private OverlayManager overlayManager;
 
-	@Inject
-	private OneClickOverlay overlay;
+    @Inject
+    private OneClickOverlay overlay;
 
-	private static final String CONFIG_GROUP = "tilemanMode";
-	private static final String REGION_PREFIX = "region_";
-	private static final Gson GSON = new Gson();
+    private static final String CONFIG_GROUP = "tilemanMode";
+    private static final String REGION_PREFIX = "region_";
+    private static final Gson GSON = new Gson();
 
-	@Override
-	protected void startUp() throws Exception
-	{
-		log.info("Example started!");
-		overlayManager.add(this.overlay);
-	}
+    @Override
+    protected void startUp() throws Exception {
+        overlayManager.add(this.overlay);
+    }
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-		log.info("Example stopped!");
-		overlayManager.remove(this.overlay);
-		this.points.clear();
-	}
+    @Override
+    protected void shutDown() throws Exception {
+        overlayManager.remove(this.overlay);
+        this.points.clear();
+    }
 
-	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged)
-	{
-		if (!configChanged.getGroup().equals(CONFIG_GROUP))
-		{
-			return;
-		}
+    @Subscribe
+    public void onConfigChanged(ConfigChanged configChanged) {
+        if (!configChanged.getGroup().equals(CONFIG_GROUP)) {
+            return;
+        }
 
-		this.loadPoints();
-	}
+        this.loadPoints();
+    }
 
-	public final List<WorldPoint> points = new ArrayList<>();
-	private void loadPoints() {
-		points.clear();
+    public final List<WorldPoint> points = new ArrayList<>();
 
-		int[] regions = client.getMapRegions();
+    private void loadPoints() {
+        points.clear();
 
-		if (regions == null) {
-			return;
-		}
+        int[] regions = client.getMapRegions();
 
-		for (int regionId : regions) {
-			// load points for region
-			log.debug("Loading points for region {}", regionId);
-			Collection<WorldPoint> worldPoint = translateToWorldPoint(getTiles(regionId));
-			points.addAll(worldPoint);
-		}
+        if (regions == null) {
+            return;
+        }
 
-		log.info("NATH loaded points " + this.points.size());
-	}
+        for (int regionId : regions) {
+            Collection<WorldPoint> worldPoint = translateToWorldPoint(getTiles(regionId));
+            points.addAll(worldPoint);
+        }
+    }
 
-	private Collection<TilemanModeTile> getConfiguration(String configGroup, String key) {
-		String json = configManager.getConfiguration(configGroup, key);
+    private Collection<TilemanModeTile> getConfiguration(String configGroup, String key) {
+        String json = configManager.getConfiguration(configGroup, key);
 
-		if (Strings.isNullOrEmpty(json)) {
-			return Collections.emptyList();
-		}
+        if (Strings.isNullOrEmpty(json)) {
+            return Collections.emptyList();
+        }
 
-		return GSON.fromJson(json, new TypeToken<List<TilemanModeTile>>() {
-		}.getType());
-	}
+        return GSON.fromJson(json, new TypeToken<List<TilemanModeTile>>() {
+        }.getType());
+    }
 
-	Collection<TilemanModeTile> getTiles(int regionId) {
-		return getConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId);
-	}
+    Collection<TilemanModeTile> getTiles(int regionId) {
+        return getConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId);
+    }
 
-	private Collection<WorldPoint> translateToWorldPoint(Collection<TilemanModeTile> points) {
-		if (points.isEmpty()) {
-			return Collections.emptyList();
-		}
+    private Collection<WorldPoint> translateToWorldPoint(Collection<TilemanModeTile> points) {
+        if (points.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-		return points.stream()
-				.map(point -> WorldPoint.fromRegion(point.getRegionId(), point.getRegionX(), point.getRegionY(), point.getZ()))
-				.flatMap(worldPoint ->
-				{
-					final Collection<WorldPoint> localWorldPoints = WorldPoint.toLocalInstance(client, worldPoint);
-					return localWorldPoints.stream();
-				})
-				.collect(Collectors.toList());
-	}
+        return points.stream()
+                .map(point -> WorldPoint.fromRegion(point.getRegionId(), point.getRegionX(), point.getRegionY(), point.getZ()))
+                .flatMap(worldPoint ->
+                {
+                    final Collection<WorldPoint> localWorldPoints = WorldPoint.toLocalInstance(client, worldPoint);
+                    return localWorldPoints.stream();
+                })
+                .collect(Collectors.toList());
+    }
 
-	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
-	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
-			this.loadPoints();
-		}
-	}
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged gameStateChanged) {
+        if (gameStateChanged.getGameState() == GameState.LOGGED_IN) {
+            this.loadPoints();
+        }
+    }
 
-	@Provides
-	OneClickConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(OneClickConfig.class);
-	}
+    @Provides
+    OneClickConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(OneClickConfig.class);
+    }
 }
