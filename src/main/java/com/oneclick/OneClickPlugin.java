@@ -16,6 +16,7 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +36,12 @@ public class OneClickPlugin extends Plugin
 	@Inject
 	private ConfigManager configManager;
 
+	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
+	private OneClickOverlay overlay;
+
 	private static final String CONFIG_GROUP = "tilemanMode";
 	private static final String REGION_PREFIX = "region_";
 	private static final Gson GSON = new Gson();
@@ -43,12 +50,15 @@ public class OneClickPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		log.info("Example started!");
+		overlayManager.add(this.overlay);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 		log.info("Example stopped!");
+		overlayManager.remove(this.overlay);
+		this.points.clear();
 	}
 
 	@Subscribe
@@ -62,7 +72,7 @@ public class OneClickPlugin extends Plugin
 		this.loadPoints();
 	}
 
-	private final List<WorldPoint> points = new ArrayList<>();
+	public final List<WorldPoint> points = new ArrayList<>();
 	private void loadPoints() {
 		points.clear();
 
@@ -118,6 +128,7 @@ public class OneClickPlugin extends Plugin
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
+			this.loadPoints();
 		}
 	}
 
