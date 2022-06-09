@@ -13,6 +13,7 @@ import com.oneclick.pathfinder.SplitFlagMap;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
@@ -62,6 +63,8 @@ public class OneClickPlugin extends Plugin {
     private final List<WorldPoint> points = new ArrayList<>();
     public final Set<WorldPoint> oneClickTiles = new HashSet<>();
     private Pathfinder pathfinder;
+
+    private LocalPoint lastTile;
 
     @Override
     protected void startUp() throws Exception {
@@ -116,7 +119,11 @@ public class OneClickPlugin extends Plugin {
 
     @Subscribe
     public void onGameTick(GameTick tick) {
-        this.updateOneClickTiles();
+        LocalPoint currentPos = LocalPoint.fromWorld(client, client.getLocalPlayer().getWorldLocation());
+        if (!currentPos.equals(lastTile)) {
+            this.updateOneClickTiles();
+            lastTile = currentPos;
+        }
     }
 
     @Subscribe
