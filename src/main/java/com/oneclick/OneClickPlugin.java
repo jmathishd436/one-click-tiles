@@ -104,6 +104,8 @@ public class OneClickPlugin extends Plugin {
 
         CollisionMap map = new CollisionMap(64, compressedRegions);
         pathfinder = new Pathfinder(map, transports);
+
+        this.loadPoints();
     }
 
     @Override
@@ -121,6 +123,7 @@ public class OneClickPlugin extends Plugin {
     public void onGameStateChanged(GameStateChanged gameStateChanged) {
         if (gameStateChanged.getGameState() == GameState.LOGGED_IN) {
             this.loadPoints();
+            this.updateOneClickTiles();
         }
     }
 
