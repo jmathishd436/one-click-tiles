@@ -65,6 +65,7 @@ public class OneClickPlugin extends Plugin {
     private Pathfinder pathfinder;
 
     private LocalPoint lastTile;
+    private boolean moved=true;
 
     @Override
     protected void startUp() throws Exception {
@@ -121,8 +122,12 @@ public class OneClickPlugin extends Plugin {
     public void onGameTick(GameTick tick) {
         LocalPoint currentPos = LocalPoint.fromWorld(client, client.getLocalPlayer().getWorldLocation());
         if (!currentPos.equals(lastTile)) {
-            this.updateOneClickTiles();
+            moved = true;
             lastTile = currentPos;
+        } else if (moved) {
+            moved = false;
+        } else {
+            this.updateOneClickTiles();
         }
     }
 
